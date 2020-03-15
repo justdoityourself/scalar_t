@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <initializer_list>
 #include <string>
 #include <vector>
 #include <array>
@@ -75,31 +76,42 @@ namespace scalar_t
 			carry = add(c[i], T(1));
 	}
 
-	/*template < typename T > bool sub(T& t1, const T& t2)
+	template < typename T > bool sub(T& t1, const T& t2)
 	{
 		bool carry = t2 > t1;
 		t1 -= t2;
-		return t2 > t1;
+		return carry;
 	}
 
 	template < typename C, typename T > void vsb(C& c, size_t i, const T& v)
 	{
-		bool carry = add(c[i], v);
+		bool carry = sub(c[i], v);
 
 		while (carry && --i != -1)
-			carry = add(c[i], T(1));
+			carry = sub(c[i], T(1));
 	}
 
 	template <typename C1, typename C2, typename R> void finite_vector_subtract(const C1& v1, const C2& v2, R& result)
 	{
+		std::copy(v1.begin(), v1.end(), result.begin());
 
+		for (size_t i = 0; i < v1.size(); i++)
+			vsb(result, i, v2[i]);
 	}
-	*/
+
+	template <typename C1, typename C2> void finite_vector_subtract(C1& v1, const C2& v2)
+	{
+		for (size_t i = 0; i < v1.size(); i++)
+			vsb(v1, i, v2[i]);
+	}
 
 	template <typename C1, typename C2, typename R> void finite_vector_multiply(const C1& v1, const C2& v2, R& result)
 	{
 		for (size_t j = 0, k = v1.size() - 1; j < v1.size(); j++, k--)
+		{
+			result[j] = 0;
 			result[0] += v1[j] * v2[k];
+		}
 		
 		for (size_t i = 1; i < v1.size(); i++)
 		{
@@ -121,12 +133,31 @@ namespace scalar_t
 			vad(result, i, v2[i]);
 	}
 
+	template <typename C1, typename C2> void finite_vector_add(C1& v1, const C2& v2)
+	{
+		for (size_t i = 0; i < v1.size(); i++)
+			vad(v1, i, v2[i]);
+	}
+
 	template<typename T, size_t S> class uintv_t : public std::array<T,S>
 	{
-		using U = std::array<T, S>;
+		using B = std::array<T, S>;
+		using U = uintv_t<T, S>;
 	public:
+
+		uintv_t() : B{} {}
+
+		uintv_t(T t)
+		{
+			for (auto& e : *this)
+				e = 0;
+
+			B::back() = t;
+		}
+
+		template <typename... TL> uintv_t(TL... ts) : B{ static_cast<T>(ts)... } {}
 		
-		U operator + (const uintv_t& r) const
+		U operator + (const U& r) const
 		{
 			U result;
 
@@ -135,7 +166,16 @@ namespace scalar_t
 			return result;
 		}
 
-		U operator * (const uintv_t& r) const
+		U operator - (const U& r) const
+		{
+			U result;
+
+			finite_vector_subtract(*this, r, result);
+
+			return result;
+		}
+
+		U operator * (const U& r) const
 		{
 			U result;
 
@@ -144,22 +184,62 @@ namespace scalar_t
 			return result;
 		}
 
-		U& operator += (const uintv_t& r) const
+		U& operator++()
 		{
-			U result;
+			vad(*this, B::size() - 1, 1);
 
-			finite_vector_add(*this, r, result);
-
-			return *this = result;
+			return *this;
 		}
 
-		U& operator *= (const uintv_t& r) const
+		U& operator += (const U& r)
+		{
+			finite_vector_add(*this, r);
+
+			return *this;
+		}
+
+		U& operator -= (const U& r)
+		{
+			finite_vector_subtract(*this, r);
+
+			return *this;
+		}
+
+		U& operator *= (const U& r)
 		{
 			U result;
 
 			finite_vector_multiply(*this, r, result);
 
 			return *this = result;
+		}
+
+		U& operator = (const U& r)
+		{
+			std::copy(r.begin(), r.end(), B::begin());
+
+			return *this;
+		}
+
+		T operator% (T m)
+		{
+			return B::back() % m;
+		}
+
+		bool operator == (const T& t) const
+		{
+			for (size_t i = 0; i < B::size() - 1; i++)
+				if ((*this)[i])
+					return false;
+
+			return B::back() == t;
+
+			return true;
+		}
+
+		bool operator == (const U& r) const
+		{
+			return std::equal(B::begin(), B::end(), r.begin());
 		}
 	};
 }

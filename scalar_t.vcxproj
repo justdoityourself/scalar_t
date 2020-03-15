@@ -214,6 +214,9 @@
     <ClInclude Include="scalar_t\int.hpp" />
     <ClInclude Include="scalar_t\test.hpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include=".gitignore" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

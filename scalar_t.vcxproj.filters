@@ -30,4 +30,7 @@
       <Filter>scalar_t</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include=".gitignore" />
+  </ItemGroup>
 </Project>

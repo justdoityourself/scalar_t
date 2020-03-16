@@ -129,7 +129,7 @@ TEST_CASE("addition overflow", "[scalar_t::uintv_t]")
 {
 	{
 		uint16_t v = 15;
-		uintv_t<uint8_t, 2> v2 = { 15, 0 }; //Litle endian
+		uintv_t<uint8_t, 2> v2 = { 15, 0 };
 
 		CHECK(std::memcmp(&v, &v2, 2) == 0);
 	}
@@ -147,9 +147,344 @@ TEST_CASE("addition overflow", "[scalar_t::uintv_t]")
 
 TEST_CASE("subtraction overflow", "[scalar_t::uintv_t]")
 {
-	uintv_t<uint8_t, 2> v = { 26,99 };
-	uintv_t<uint8_t, 2> v2;
+	using U = uintv_t<uint8_t, 2>;
+	U v = { 26,99 };
+	U v2;
 
-	auto inv = v2 - v;
-	CHECK(v + inv == 0);
+	auto add_inv = v2 - v;
+	CHECK((v + add_inv == U{ 0, 0 }));
+}
+
+
+TEST_CASE("Left Shift", "[scalar_t::uintv_t]")
+{
+	using U = uintv_t<uint8_t, 2>;
+
+	{
+		U v; v.Random();
+		U v2 = v;
+
+		v <<= 1;
+		v2 *= 2;
+
+		CHECK(v == v2);
+	}
+
+	{
+		U v; v.Random();
+		U v2 = v;
+
+		v <<= 2;
+		v2 *= 4;
+
+		CHECK(v == v2);
+	}
+
+	{
+		U v; v.Random();
+		U v2 = v;
+
+		v <<= 3;
+		v2 *= 8;
+
+		CHECK(v == v2);
+	}
+
+	{
+		U v; v.Random();
+		U v2 = v;
+
+		v <<= 4;
+		v2 *= 16;
+
+		CHECK(v == v2);
+	}
+
+	{
+		U v; v.Random();
+		U v2 = v;
+
+		v <<= 5;
+		v2 *= 32;
+
+		CHECK(v == v2);
+	}
+
+	{
+		U v; v.Random();
+		U v2 = v;
+
+		v <<= 6;
+		v2 *= 64;
+
+		CHECK(v == v2);
+	}
+
+	{
+		U v; v.Random();
+		U v2 = v;
+
+		v <<= 7;
+		v2 *= 128;
+
+		CHECK(v == v2);
+	}
+
+	{
+		U v; v.Random();
+		U v2 = v;
+
+		v <<= 8;
+		v2 *= {1, 0}; //256
+
+		CHECK(v == v2);
+	}
+
+	{
+		U v; v.Random();
+		U v2 = v;
+
+		v <<= 9;
+		v2 *= {2, 0}; //512
+
+		CHECK(v == v2);
+	}
+}
+
+TEST_CASE("Right Shift", "[scalar_t::uintv_t]")
+{
+	using U = uintv_t<uint8_t, 2>;
+
+	{
+		U v; v.Random();
+		U v2 = v;
+
+		v >>= 1;
+		v2 /= 2;
+
+		CHECK(v == v2);
+	}
+
+	{
+		U v; v.Random();
+		U v2 = v;
+
+		v >>= 2;
+		v2 /= 4;
+
+		CHECK(v == v2);
+	}
+
+	{
+		U v; v.Random();
+		U v2 = v;
+
+		v >>= 3;
+		v2 /= 8;
+
+		CHECK(v == v2);
+	}
+
+	{
+		U v; v.Random();
+		U v2 = v;
+
+		v >>= 4;
+		v2 /= 16;
+
+		CHECK(v == v2);
+	}
+
+	{
+		U v; v.Random();
+		U v2 = v;
+
+		v >>= 5;
+		v2 /= 32;
+
+		CHECK(v == v2);
+	}
+
+	{
+		U v; v.Random();
+		U v2 = v;
+
+		v >>= 6;
+		v2 /= 64;
+
+		CHECK(v == v2);
+	}
+
+	{
+		U v; v.Random();
+		U v2 = v;
+
+		v >>= 7;
+		v2 /= 128;
+
+		CHECK(v == v2);
+	}
+
+	{
+		U v; v.Random();
+		U v2 = v;
+
+		v >>= 8;
+		v2 /= { 1,0 };
+
+		CHECK(v == v2);
+	}
+
+	{
+		U v; v.Random();
+		U v2 = v;
+
+		v >>= 9;
+		v2 /= { 2,0 };
+
+		CHECK(v == v2);
+	}
+}
+
+TEST_CASE("Division", "[scalar_t::uintv_t]")
+{
+	using U = uintv_t<uint8_t, 2>;
+
+	U n = { 0xfa,0xe0 }, d = { 0x00, 0x02 };
+
+	n /= d;
+}
+
+
+
+TEST_CASE("MultiplicativeInverse", "[scalar_t::uintv_t]")
+{
+	using U = uintv_t<uint8_t, 2>;
+	U v = { 0x21,0xe7 }, rr = { 0x61, 0xd7 }; // 8679
+	
+	auto mul_inv = v.MultiplicativeInverse();
+
+	v *= mul_inv;
+
+	CHECK(v == 1);
+}
+
+TEST_CASE("MultiplicativeInverse 128bit", "[scalar_t::uintv_t]")
+{
+	using U = uintv_t<uint64_t, 2>;
+	auto constexpr rep = 10;
+
+	for (size_t i = 0; i < rep; i++)
+	{
+		U v; v.Random();
+
+		if (v % 2 == 0)
+			++v;
+
+		auto mul_inv = v.MultiplicativeInverse();
+
+		v *= mul_inv;
+
+		CHECK(v == 1);
+	}
+}
+
+TEST_CASE("MultiplicativeInverse 256bit", "[scalar_t::uintv_t]")
+{
+	using U = uintv_t<uint64_t, 4>;
+	auto constexpr rep = 10;
+
+	for (size_t i = 0; i < rep; i++)
+	{
+		U v; v.Random();
+
+		if (v % 2 == 0)
+			++v;
+
+		auto mul_inv = v.MultiplicativeInverse();
+
+		v *= mul_inv;
+
+		CHECK(v == 1);
+	}
+}
+
+TEST_CASE("MultiplicativeInverse 512bit", "[scalar_t::uintv_t]")
+{
+	using U = uintv_t<uint64_t, 8>;
+	auto constexpr rep = 10;
+
+	for (size_t i = 0; i < rep; i++)
+	{
+		U v; v.Random();
+
+		if (v % 2 == 0)
+			++v;
+
+		auto mul_inv = v.MultiplicativeInverse();
+
+		v *= mul_inv;
+
+		CHECK(v == 1);
+	}
+}
+
+TEST_CASE("MultiplicativeInverse 1024bit", "[scalar_t::uintv_t]")
+{
+	using U = uintv_t<uint64_t, 16>;
+	auto constexpr rep = 1;
+
+	for (size_t i = 0; i < rep; i++)
+	{
+		U v; v.Random();
+
+		if (v % 2 == 0)
+			++v;
+
+		auto mul_inv = v.MultiplicativeInverse();
+
+		v *= mul_inv;
+
+		CHECK(v == 1);
+	}
+}
+
+TEST_CASE("MultiplicativeInverse 2048bit", "[scalar_t::uintv_t]")
+{
+	using U = uintv_t<uint64_t, 32>;
+	auto constexpr rep = 1;
+
+	for (size_t i = 0; i < rep; i++)
+	{
+		U v; v.Random();
+
+		if (v % 2 == 0)
+			++v;
+
+		auto mul_inv = v.MultiplicativeInverse();
+
+		v *= mul_inv;
+
+		CHECK(v == 1);
+	}
+}
+
+TEST_CASE("MultiplicativeInverse 4096bit", "[scalar_t::uintv_t]")
+{
+	using U = uintv_t<uint64_t, 64>;
+	auto constexpr rep = 1;
+
+	for (size_t i = 0; i < rep; i++)
+	{
+		U v; v.Random();
+
+		if (v % 2 == 0)
+			++v;
+
+		auto mul_inv = v.MultiplicativeInverse();
+
+		v *= mul_inv;
+
+		CHECK(v == 1);
+	}
 }

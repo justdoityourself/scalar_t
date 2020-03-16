@@ -29,6 +29,9 @@
     <ClInclude Include="scalar_t\test.hpp">
       <Filter>scalar_t</Filter>
     </ClInclude>
+    <ClInclude Include="scalar_t\helper.hpp">
+      <Filter>scalar_t</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />

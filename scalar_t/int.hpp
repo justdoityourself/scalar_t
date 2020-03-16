@@ -14,148 +14,117 @@
 #pragma intrinsic(_umul128)
 
 
+#include "d8u/random.hpp"
+
+#include "helper.hpp"
+
 namespace scalar_t
 {
-	/*
-		Finite Multiplication
-
-		    6 7 4
-		 X  1 1 1
-
-		6 6 6
-		  7 7 7
-		    4 4 4
-
-			6
-			7 7
-			4 4 4
-	*/
-
-	//Little Endian
-	template <typename S, typename L> auto mut(const S& s1, const S& s2)
-	{
-		union
-		{
-			S s[2];
-			L l;
-		};
-
-		l = (L)s1 * (L)s2;
-
-		return std::make_pair(s[1], s[0]);
-	}
-
-	template < typename T > auto mul(const T& t1, const T& t2)
-	{
-		if constexpr (std::is_same<T, uint8_t>())
-			return mut<T, uint16_t>(t1, t2);
-		if constexpr (std::is_same<T, uint16_t>())
-			return mut<T, uint32_t>(t1, t2);
-		if constexpr (std::is_same<T, uint32_t>())
-			return mut<T, uint64_t>(t1, t2);
-		if constexpr (std::is_same<T, uint64_t>())
-		{
-			uint64_t lw, hh;
-			lw = _umul128(t1, t2, &hh);
-
-			return std::make_pair(hh, lw);
-		}
-	}
-
-	template < typename T > bool add(T& t1, const T& t2)
-	{
-		t1 += t2;
-		return t2 > t1;
-	}
-
-	template < typename C, typename T > void vad(C & c, size_t i, const T & v)
-	{
-		bool carry = add(c[i],v);
-
-		while (carry && --i != -1)
-			carry = add(c[i], T(1));
-	}
-
-	template < typename T > bool sub(T& t1, const T& t2)
-	{
-		bool carry = t2 > t1;
-		t1 -= t2;
-		return carry;
-	}
-
-	template < typename C, typename T > void vsb(C& c, size_t i, const T& v)
-	{
-		bool carry = sub(c[i], v);
-
-		while (carry && --i != -1)
-			carry = sub(c[i], T(1));
-	}
-
-	template <typename C1, typename C2, typename R> void finite_vector_subtract(const C1& v1, const C2& v2, R& result)
-	{
-		std::copy(v1.begin(), v1.end(), result.begin());
-
-		for (size_t i = 0; i < v1.size(); i++)
-			vsb(result, i, v2[i]);
-	}
-
-	template <typename C1, typename C2> void finite_vector_subtract(C1& v1, const C2& v2)
-	{
-		for (size_t i = 0; i < v1.size(); i++)
-			vsb(v1, i, v2[i]);
-	}
-
-	template <typename C1, typename C2, typename R> void finite_vector_multiply(const C1& v1, const C2& v2, R& result)
-	{
-		for (size_t j = 0, k = v1.size() - 1; j < v1.size(); j++, k--)
-		{
-			result[j] = 0;
-			result[0] += v1[j] * v2[k];
-		}
-		
-		for (size_t i = 1; i < v1.size(); i++)
-		{
-			for (size_t j = i, k = v1.size() - 1; j < v1.size(); j++, k--)
-			{
-				auto [h,l] = mul(v1[j], v2[k]);
-
-				vad(result, i, l);
-				vad(result, i - 1, h);
-			}
-		}
-	}
-
-	template <typename C1, typename C2, typename R> void finite_vector_add(const C1& v1, const C2& v2, R & result)
-	{
-		std::copy(v1.begin(), v1.end(), result.begin());
-
-		for (size_t i = 0; i < v1.size(); i++)
-			vad(result, i, v2[i]);
-	}
-
-	template <typename C1, typename C2> void finite_vector_add(C1& v1, const C2& v2)
-	{
-		for (size_t i = 0; i < v1.size(); i++)
-			vad(v1, i, v2[i]);
-	}
+	using namespace helper;
 
 	template<typename T, size_t S> class uintv_t : public std::array<T,S>
 	{
 		using B = std::array<T, S>;
 		using U = uintv_t<T, S>;
+
 	public:
+
+		std::string string()
+		{
+			std::stringstream s;
+
+			for (auto& e : *this)
+				s << std::hex << +e;
+
+			return s.str();
+		}
+
+		explicit operator bool() const
+		{
+			for (auto& e : *this)
+				if (e)
+					return true;
+
+			return false;
+		}
+
+		void Random()
+		{
+			for (auto& e : *this)
+				e = (T)d8u::random::Integer();
+		}
+
+		void BinaryInvert()
+		{
+			for (auto& e : *this)
+				e = ~e;
+		}
+
+		/*U MultiplicativeInverseStack()
+		{ 
+			//Get the Q and M base on MAX_VALUE + 1
+			U quo(1), rem, den = *this;
+
+			while (!finite_vector_add(den, *this))
+				++quo;
+
+			rem = (*this) * quo;
+			rem.BinaryInvert();
+			++rem;
+
+			auto [gdc, x, y] = _e_gcd(rem, *this);
+
+			return (y - quo * x);
+		}*/
+
+		/*U MultiplicativeInverseHeap()
+		{
+			//Get the Q and M base on MAX_VALUE + 1
+			U quo(1), rem, den = *this;
+
+			while (!finite_vector_add(den, *this))
+				++quo;
+
+			rem = (*this) * quo;
+			rem.BinaryInvert();
+			++rem;
+
+			if (rem < *this);
+			else
+				std::cout << "here" << std::endl;
+
+			d8u::vector::BlockVector < 64, std::pair<U, U> > blk;
+
+			auto [x, y] = _e_gcd_heap(rem, *this,blk);
+
+			return (y - quo * x);
+		}*/
+
+		U MultiplicativeInverse()
+		{
+			//Get the Q and M base on MAX_VALUE + 1
+			U quo(1), rem, den = *this;
+
+			while (!finite_vector_add(den, *this))
+				++quo;
+
+			rem = (*this) * quo;
+			rem.BinaryInvert();
+			++rem;
+
+			auto [x, y] = _e_gcd_loop(rem, *this);
+
+			return (y - quo * x);
+		}
 
 		uintv_t() : B{} {}
 
-		uintv_t(T t)
+		uintv_t(T t) : B{} 
 		{
-			for (auto& e : *this)
-				e = 0;
-
 			B::back() = t;
 		}
 
-		template <typename... TL> uintv_t(TL... ts) : B{ static_cast<T>(ts)... } {}
+		template <typename... TL> uintv_t(T t, TL... ts) : B{ t, static_cast<T>(ts)... } {}
 		
 		U operator + (const U& r) const
 		{
@@ -221,25 +190,107 @@ namespace scalar_t
 			return *this;
 		}
 
-		T operator% (T m)
+		U& operator = (const T& t)
+		{
+			for (auto& e : *this)
+				e = 0;
+
+			B::back() = t;
+
+			return *this;
+		}
+
+		U operator / (const U& r) const
+		{
+			auto [q,m] = finite_vector_div(*this, r);
+
+			return q;
+		}
+
+		U& operator /= (const U& r)
+		{
+			auto [q, m] = finite_vector_div(*this, r);
+
+			return *this = q;
+		}
+
+		U operator % (const U& r) const
+		{
+			auto [q, m] = finite_vector_div(*this, r);
+
+			return m;
+		}
+
+		T operator% (T m) const
 		{
 			return B::back() % m;
 		}
 
-		bool operator == (const T& t) const
+		U operator << (size_t b) const
 		{
-			for (size_t i = 0; i < B::size() - 1; i++)
-				if ((*this)[i])
-					return false;
+			U result = *this;
+			vls<T>(result, b);
 
-			return B::back() == t;
+			return result;
+		}
 
-			return true;
+		U& operator <<= (size_t b)
+		{
+			vls<T>(*this, b);
+
+			return *this;
+		}
+
+		U operator >> (size_t b) const
+		{
+			U result = *this;
+			vrs<T>(result, b);
+
+			return result;
+		}
+
+		U& operator >>= (size_t b)
+		{
+			vrs<T>(*this, b);
+
+			return *this;
 		}
 
 		bool operator == (const U& r) const
 		{
 			return std::equal(B::begin(), B::end(), r.begin());
+		}
+
+		auto Divide(const U& r) const
+		{
+			return finite_vector_div(*this, r);
+		}
+
+		U& DivideSimple(const U& r)
+		{
+			auto [q,m] = finite_vector_div_simple(*this, r);
+
+			*this = q;
+
+			return *this;
+		}
+
+		size_t Bits() const
+		{
+			size_t i = 0;
+			for (; i < B::size(); i++)
+				if ((*this)[i])
+					break;
+
+			return (B::size() - 1 - i) * bits<T>() + greatest_bit((*this)[i]);
+		}
+
+		void SetBit(size_t bit)
+		{
+			auto q = bit / bits<T>();
+			auto m = bit % bits<T>();
+
+			(*this)[B::size() - 1 - q] |= (T(1) << m);
 		}
 	};
 }

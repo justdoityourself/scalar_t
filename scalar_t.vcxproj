@@ -107,6 +107,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Test|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>../d8u;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -211,6 +212,7 @@
     <ClCompile Include="scalar_t.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="scalar_t\helper.hpp" />
     <ClInclude Include="scalar_t\int.hpp" />
     <ClInclude Include="scalar_t\test.hpp" />
   </ItemGroup>

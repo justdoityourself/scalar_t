@@ -15,6 +15,7 @@
 
 
 #include "d8u/random.hpp"
+#include "d8u/string.hpp"
 
 #include "helper.hpp"
 
@@ -27,6 +28,8 @@ namespace scalar_t
 		using B = std::array<T, S>;
 		using U = uintv_t<T, S>;
 
+		using EX = uintv_t<T, S+1>;
+
 	public:
 
 		std::string string()
@@ -34,7 +37,7 @@ namespace scalar_t
 			std::stringstream s;
 
 			for (auto& e : *this)
-				s << std::hex << +e;
+				s << std::hex << +e << " ";
 
 			return s.str();
 		}
@@ -51,7 +54,7 @@ namespace scalar_t
 		void Random()
 		{
 			for (auto& e : *this)
-				e = (T)d8u::random::Integer();
+				e = (T)d8u::util::Integer();
 		}
 
 		void BinaryInvert()
@@ -102,19 +105,25 @@ namespace scalar_t
 
 		U MultiplicativeInverse()
 		{
-			//Get the Q and M base on MAX_VALUE + 1
-			U quo(1), rem, den = *this;
+			EX c, t;
 
-			while (!finite_vector_add(den, *this))
-				++quo;
+			t[0] = 1;
+			std::copy(B::begin(), B::end(), &c[1]);
 
-			rem = (*this) * quo;
-			rem.BinaryInvert();
-			++rem;
+			auto [x, y] = _e_gcd_loop(c,t);
 
-			auto [x, y] = _e_gcd_loop(rem, *this);
+			U r;
+			std::copy(y.begin()+1, y.end(), &r[0]);
 
-			return (y - quo * x);
+			if (*this * r == 1)
+				return r;
+
+			r = U(0) - r;
+
+			if (*this * r == 1)
+				return r;
+
+			return U(1);
 		}
 
 		uintv_t() : B{} {}
@@ -122,6 +131,14 @@ namespace scalar_t
 		uintv_t(T t) : B{} 
 		{
 			B::back() = t;
+		}
+
+		uintv_t(std::string_view v)
+		{
+			std::istringstream s{ std::string(v) };
+
+			for (T & e : *this)
+				s >> std::hex >> e;
 		}
 
 		template <typename... TL> uintv_t(T t, TL... ts) : B{ t, static_cast<T>(ts)... } {}

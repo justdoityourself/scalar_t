@@ -426,6 +426,20 @@ TEST_CASE("MultiplicativeInverse", "[scalar_t::uintv_t]")
 	CHECK(v == 1);
 }
 
+TEST_CASE("Specific Misses", "[scalar_t::uintv_t]")
+{
+	{
+		using U = uintv_t<uint64_t, 2>;
+		U v("cb645cdfeec89666 914da98986504d99");
+
+		auto r = v.MultiplicativeInverse();
+
+		v *= r;
+
+		CHECK(v == 1);
+	}
+}
+
 TEST_CASE("MultiplicativeInverse 128bit", "[scalar_t::uintv_t]")
 {
 	using U = uintv_t<uint64_t, 2>;
@@ -434,6 +448,7 @@ TEST_CASE("MultiplicativeInverse 128bit", "[scalar_t::uintv_t]")
 	for (size_t i = 0; i < rep; i++)
 	{
 		U v; v.Random();
+		U c = v;
 
 		if (v % 2 == 0)
 			++v;
@@ -441,6 +456,9 @@ TEST_CASE("MultiplicativeInverse 128bit", "[scalar_t::uintv_t]")
 		auto mul_inv = v.MultiplicativeInverse();
 
 		v *= mul_inv;
+
+		if (v != 1)
+			std::cout << c.string() << std::endl;
 
 		CHECK(v == 1);
 	}

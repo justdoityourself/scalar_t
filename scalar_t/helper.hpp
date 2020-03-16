@@ -266,13 +266,15 @@ namespace scalar_t
 		{
 			for (size_t i = 0; i < v1.size(); i++)
 			{
-				if (v1[i] && v1[i] >= v2[i])
+				if (v1[i] > v2[i])
 					return true;
+				else if (v1[i] == v2[i])
+					continue;
 				else if (v1[i] != v2[i])
 					return false;
 			}
 
-			return false;
+			return true;
 		}
 
 
@@ -345,7 +347,7 @@ namespace scalar_t
 		//The smaller stack helps but still is not a good choice when dealing with larger scalars.
 		//
 
-		template<typename T> std::pair<T, T> & _e_gcd_heap(const T& a, const T& b, d8u::dynamic::BlockVector < 64, std::pair<T, T> > & v)
+		template<typename T> std::pair<T, T> & _e_gcd_heap(const T& a, const T& b, d8u::util::BlockVector < 64, std::pair<T, T> > & v)
 		{
 			if (a == 0)
 			{
@@ -394,6 +396,9 @@ namespace scalar_t
 		template<typename T> std::pair<T, T> _e_gcd_loop(T a, T b)
 		{
 			T aa[2] = { 1,0 }, bb[2] = { 0,1 },q;
+
+			if (b > a)
+				std::swap(a, b);
 
 			while (true) 
 			{

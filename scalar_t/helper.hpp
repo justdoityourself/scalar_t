@@ -200,6 +200,31 @@ namespace scalar_t
 			}
 		}
 
+		template <typename C1, typename C2> void finite_vector_multiply(C1& v1, const C2& v2)
+		{
+			for (size_t j = 0, k = v1.size() - 1; j < v1.size(); j++, k--)
+			{
+				if (!j)
+					v1[0] = v1[j] * v2[k];
+				else
+					v1[0] += v1[j] * v2[k];
+			}
+
+			for (size_t i = 1; i < v1.size(); i++)
+			{
+				for (size_t j = i, k = v1.size() - 1; j < v1.size(); j++, k--)
+				{
+					auto [h, l] = mul(v1[j], v2[k]);
+
+					if (j == i)
+						v1[j] = 0;
+
+					vad(v1, i, l);
+					vad(v1, i - 1, h);
+				}
+			}
+		}
+
 		template <typename C1, typename C2, typename R> bool finite_vector_add(const C1& v1, const C2& v2, R& result)
 		{
 			bool overflow = false;
@@ -320,7 +345,7 @@ namespace scalar_t
 		//The smaller stack helps but still is not a good choice when dealing with larger scalars.
 		//
 
-		template<typename T> std::pair<T, T> & _e_gcd_heap(const T& a, const T& b, d8u::vector::BlockVector < 64, std::pair<T, T> > & v)
+		template<typename T> std::pair<T, T> & _e_gcd_heap(const T& a, const T& b, d8u::dynamic::BlockVector < 64, std::pair<T, T> > & v)
 		{
 			if (a == 0)
 			{

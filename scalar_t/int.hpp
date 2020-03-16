@@ -176,11 +176,9 @@ namespace scalar_t
 
 		U& operator *= (const U& r)
 		{
-			U result;
+			finite_vector_multiply(*this, r);
 
-			finite_vector_multiply(*this, r, result);
-
-			return *this = result;
+			return *this;
 		}
 
 		U& operator = (const U& r)

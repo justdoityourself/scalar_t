@@ -13,7 +13,6 @@ Addition overflow of the highest element is discarded.
 
 Multiplication overflow is also discarded as follows:
 
-Finite Multiplication
 
 			    6 7 4
 			 X  1 1 1
@@ -25,3 +24,34 @@ Finite Multiplication
 			    6
 			    7 7
 			    4 4 4
+			  
+## Usage
+
+```C++
+#include "scalar_t/int.hpp"
+
+using uint128_t = scalar_t::uintv_t<uint64_t,2>;
+using uint1024_t = scalar_t::uintv_t<uint64_t,16>;
+
+void test()
+{
+	uint128_t construct_from_string("cb645cdfeec89666 914da98986504d99");
+	
+	uint1024_t random_int;
+	random_int.Random();
+	
+	auto random_int_as_string = random_int.string();
+	
+	auto inv = random_int.MultiplicativeInverse();
+	
+	auto value_of_one = random_int * inv;
+	
+	auto doubled_int = random_int << 1;
+	auto also_doubled_int = random_int * 2;
+	
+	bool equal_ints = doubled_int == also_doubled_int;
+	
+	auto [q,m] = random_int.Divide(10);
+}
+
+```

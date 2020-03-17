@@ -2,6 +2,8 @@
 
 #pragma once
 
+
+#include <chrono>
 #include <array>
 
 #include "../catch.hpp"
@@ -9,6 +11,77 @@
 #include "int.hpp"
 
 using namespace scalar_t;
+
+TEST_CASE("finite_vector_fuse_multiply_add", "[scalar_t::uintv_t]")
+{
+	using U = uintv_t<uint64_t, 32>; //1024bit
+	
+	U r; r.Random();
+	U m1; m1.Random();
+	U m2; m2.Random();
+
+	auto v1 = r;
+	auto v2 = r;
+
+	{
+		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+		v2 += m1 * m2;
+
+		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+		std::cout << "Default = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
+	}
+
+	{
+		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+		v1.FMADD(m1, m2);
+
+		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+		std::cout << "FMA = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
+	}
+
+	CHECK(v2 == v1);
+}
+
+TEST_CASE("finite_vector_fuse_multiply_add loop", "[scalar_t::uintv_t]")
+{
+	using U = uintv_t<uint64_t, 32>; //1024bit
+	auto constexpr lim = 10;
+
+	U r; r.Random();
+	U m1; m1.Random();
+	U m2; m2.Random();
+
+	auto v1 = r;
+	auto v2 = r;
+
+	{
+		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+		for(size_t i = 0; i < lim; i++)
+			v2 += m1 * m2;
+
+		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+		std::cout << "Default = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
+	}
+
+	{
+		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+		for (size_t i = 0; i < lim; i++)
+			v1.FMADD(m1, m2);
+
+		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+		std::cout << "FMA = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
+	}
+
+	CHECK(v2 == v1);
+}
 
 TEST_CASE("standing in place multiplication", "[scalar_t::helpers]")
 {

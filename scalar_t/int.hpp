@@ -267,5 +267,10 @@ namespace scalar_t
 
 			(*this)[B::size() - 1 - q] |= (T(1) << m);
 		}
+
+		void FMADD(const U& t1, const U& t2)
+		{
+			finite_vector_fuse_multiply_add(t1, t2, *this);
+		}
 	};
 }

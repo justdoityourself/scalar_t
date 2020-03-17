@@ -180,6 +180,23 @@ namespace scalar_t
 			return overflow;
 		}
 
+		template <typename C1, typename C2, typename A> void finite_vector_fuse_multiply_add(const C1& v1, const C2& v2, A& accumulate)
+		{
+			for (size_t j = 0, k = v1.size() - 1; j < v1.size(); j++, k--)
+				accumulate[0] += v1[j] * v2[k];
+
+			for (size_t i = 1; i < v1.size(); i++)
+			{
+				for (size_t j = i, k = v1.size() - 1; j < v1.size(); j++, k--)
+				{
+					auto [h, l] = mul(v1[j], v2[k]);
+
+					vad(accumulate, i, l);
+					vad(accumulate, i - 1, h);
+				}
+			}
+		}
+
 		template <typename C1, typename C2, typename R> void finite_vector_multiply(const C1& v1, const C2& v2, R& result)
 		{
 			for (size_t j = 0, k = v1.size() - 1; j < v1.size(); j++, k--)

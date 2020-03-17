@@ -37,6 +37,8 @@ void test()
 {
 	uint128_t construct_from_string("cb645cdfeec89666 914da98986504d99");
 	
+	uint128_t construct_from_initializer_list{ 12345,54321 };
+	
 	uint1024_t random_int;
 	random_int.Random();
 	

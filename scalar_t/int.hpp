@@ -54,7 +54,7 @@ namespace scalar_t
 		void Random()
 		{
 			for (auto& e : *this)
-				e = (T)d8u::util::Integer();
+				e = (T)d8u::random::Integer();
 		}
 
 		void BinaryInvert()
@@ -62,46 +62,6 @@ namespace scalar_t
 			for (auto& e : *this)
 				e = ~e;
 		}
-
-		/*U MultiplicativeInverseStack()
-		{ 
-			//Get the Q and M base on MAX_VALUE + 1
-			U quo(1), rem, den = *this;
-
-			while (!finite_vector_add(den, *this))
-				++quo;
-
-			rem = (*this) * quo;
-			rem.BinaryInvert();
-			++rem;
-
-			auto [gdc, x, y] = _e_gcd(rem, *this);
-
-			return (y - quo * x);
-		}*/
-
-		/*U MultiplicativeInverseHeap()
-		{
-			//Get the Q and M base on MAX_VALUE + 1
-			U quo(1), rem, den = *this;
-
-			while (!finite_vector_add(den, *this))
-				++quo;
-
-			rem = (*this) * quo;
-			rem.BinaryInvert();
-			++rem;
-
-			if (rem < *this);
-			else
-				std::cout << "here" << std::endl;
-
-			d8u::vector::BlockVector < 64, std::pair<U, U> > blk;
-
-			auto [x, y] = _e_gcd_heap(rem, *this,blk);
-
-			return (y - quo * x);
-		}*/
 
 		U MultiplicativeInverse()
 		{

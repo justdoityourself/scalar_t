@@ -15,13 +15,13 @@ Multiplication overflow is also discarded as follows:
 
 Finite Multiplication
 
-				  6 7 4
+			    6 7 4
 			 X  1 1 1
 
 			6 6 6
 			  7 7 7
-				  4 4 4
+			    4 4 4
 
-				  6
-				  7 7
-				  4 4 4
+			    6
+			    7 7
+			    4 4 4

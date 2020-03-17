@@ -55,3 +55,7 @@ void test()
 }
 
 ```
+
+## Additional Details
+
+Please see scalar_t/test.hpp for a comprehensive view of how to use this library.

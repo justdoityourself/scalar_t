@@ -12,6 +12,449 @@
 
 using namespace scalar_t;
 
+TEST_CASE("fuse invert", "[scalar_t::uintv_t]")
+{
+	{
+		using U = uintv_t<uint8_t, 4>; 
+
+		uint32_t test_r = 0xda11d269;
+		uint32_t test_m = 0x1500985d;
+
+		uint32_t test_v = test_r;
+		uint32_t test_inv = 0;
+		test_inv -= test_m;
+		test_v += test_inv;
+
+		U r{ 0xda,0x11,0xd2,0x69 };
+		U m4{ 0x15,0x00,0x98,0x5d };
+
+		auto v1 = r;
+		auto v2 = r;
+
+		auto inv = U(0) - m4;
+		v1 += inv;
+
+		v2.INVADD(m4);
+
+		CHECK(v2 == v1);
+	}
+
+	{
+		using U = uintv_t<uint8_t, 4>; 
+
+		uint32_t test_r = 0xb15f00ec;
+		uint32_t test_m = 0xc6e90013;
+
+		uint32_t test_v = test_r;
+		uint32_t test_inv = 0;
+		test_inv -= test_m;
+		test_v += test_inv;
+
+		U r{ 0xb1,0x5f,0x00,0xec };
+		U m4{ 0xc6,0xe9,0x00,0x13 };
+
+		auto v1 = r;
+		auto v2 = r;
+
+		auto inv = U(0) - m4;
+		v1 += inv;
+
+		v2.INVADD(m4);
+
+		CHECK(v2 == v1);
+	}
+
+	{
+		using U = uintv_t<uint8_t, 4>; //32bit
+
+		U r; r.Random();
+		U m4; m4.Random();
+
+		auto v1 = r;
+		auto v2 = r;
+
+		auto inv = U(0) - m4;
+		v1 += inv;
+
+		v2.INVADD(m4);
+
+		CHECK(v2 == v1);
+	}
+
+	{
+		using U = uintv_t<uint8_t, 4>; //32bit
+
+		U r; r.Random();
+		U m4; m4.Random();
+
+		m4[3] = 0; //Test alter carry pattern.
+
+		auto v1 = r;
+		auto v2 = r;
+
+		auto inv = U(0) - m4;
+		v1 += inv;
+
+		v2.INVADD(m4);
+
+		CHECK(v2 == v1);
+	}
+
+	{
+		using U = uintv_t<uint64_t, 16>; //1024bit
+
+		U r; r.Random();
+		U m4; m4.Random();
+
+		auto v1 = r;
+		auto v2 = r;
+
+		auto inv = U(0) - m4;
+		v1 += inv;
+
+		v2.INVADD(m4);
+
+		CHECK(v2 == v1);
+	}
+
+	{
+		using U = uintv_t<uint64_t, 16>;
+
+		U r; r.Random();
+		U m4; m4.Random();
+
+		m4[15] = 0; //Test alter carry pattern.
+
+		auto v1 = r;
+		auto v2 = r;
+
+		auto inv = U(0) - m4;
+		v1 += inv;
+
+		v2.INVADD(m4);
+
+		CHECK(v2 == v1);
+	}
+
+	for (size_t i = 0; i < 65*1000; i++)
+	{
+		using U = uintv_t<uint8_t, 4>;
+
+		U r; r.Random();
+		U m4; m4.Random();
+
+		auto v1 = r;
+		auto v2 = r;
+
+		auto inv = U(0) - m4;
+		v1 += inv;
+
+		v2.INVADD(m4);
+
+		if (v2 != v1)
+			std::cout << r.string() << " " << m4.string() << std::endl;
+
+		CHECK(v2 == v1);
+	}
+
+	for (size_t i = 0; i < 1000; i++)
+	{
+		using U = uintv_t<uint64_t, 16>;
+
+		U r; r.Random();
+		U m4; m4.Random();
+
+		auto v1 = r;
+		auto v2 = r;
+
+		auto inv = U(0) - m4;
+		v1 += inv;
+
+		v2.INVADD(m4);
+
+		CHECK(v2 == v1);
+	}
+}
+
+TEST_CASE("finite_vector_fuse_multiply3_invadd", "[scalar_t::uintv_t]")
+{
+	{
+		using U = uintv_t<uint8_t, 3>;
+
+		U r{ 0,0,0 };
+		U m1{ 0x1,0x1,0x1 };
+		U m2{ 0x1,0x1,0x1 };
+		U m3{ 0x1,0x1,0x1 };
+
+		auto v1 = r;
+		auto v2 = r;
+
+
+		v2 += U(0) - m1 * m2 * m3;
+
+		v1.FM3IAD(m1, m2, m3);
+
+		CHECK(v2 == v1);
+	}
+
+	{
+		using U = uintv_t<uint64_t, 16>;
+
+		U r{ 0,0,0,0 };
+		U m1{ 0x1,0x1,0x1, 8 };
+		U m2{ 0x1,8,0x1,45 };
+		U m3{ 46,65,0x1,32 };
+
+		auto v1 = r;
+		auto v2 = r;
+
+
+		v2 += U(0) - m1 * m2 * m3;
+
+		v1.FM3IAD(m1, m2, m3);
+
+		CHECK(v2 == v1);
+	}
+
+	{
+		using U = uintv_t<uint8_t, 4>;
+
+		U r{ 0xd0,0x14,0xef,0x0c };
+		U m1{ 0x21,0x6d,0xfd, 0x2b };
+		U m2{ 0xc0,0x98,0xc7,0x79 };
+		U m3{ 0x3d,0x9f,0x72,0x7d };
+
+		auto v1 = r;
+		auto v2 = r;
+
+
+		v2 += U(0) - m1 * m2 * m3;
+
+		v1.FM3IAD(m1, m2, m3);
+
+		CHECK(v2 == v1);
+	}
+
+	{
+		using U = uintv_t<uint8_t, 4>;
+
+		U r{ 0xca,0x92 ,0xd9 ,0xd5 };
+		U m1{ 0x95 ,0x8f ,0x54 ,0xe1 };
+		U m2{ 0xd1 ,0xa8 ,0x9b ,0x15 };
+		U m3{ 0x97 ,0x9b ,0xdc ,0x89 };
+
+		auto v1 = r;
+		auto v2 = r;
+
+
+		v2 += U(0) - m1 * m2 * m3;
+
+		v1.FM3IAD(m1, m2, m3);
+
+		CHECK(v2 == v1);
+	}
+
+	{
+		using U = uintv_t<uint8_t, 4>;
+
+		U r{ 0xd0,0x14,0xef,0x0c };
+		U m1{ 0x21,0x6d,0xfd, 0x2b };
+		U m2{ 0xc0,0x98,0xc7,0x79 };
+		U m3{ 0x3d,0x9f,0x72,0x7d };
+
+		auto v1 = r;
+		auto v2 = r;
+
+
+		v2 += U(0) - m1 * m2 * m3;
+
+		v1.FM3IAD(m1, m2, m3);
+
+		CHECK(v2 == v1);
+	}
+
+	for(size_t i = 0; i < 65 * 1000; i++)
+	{
+		using U = uintv_t<uint8_t, 4>;
+
+		U r; r.Random();
+		U m1; m1.Random();
+		U m2; m2.Random();
+		U m3; m3.Random();
+
+		auto v1 = r;
+		auto v2 = r;
+
+		v2 += U(0) - m1 * m2 * m3;
+
+		v1.FM3IAD(m1, m2, m3);
+
+		if (v2 != v1)
+			std::cout << r.string() << " " << m1.string() << " " << m2.string() << " " << m3.string() << std::endl;
+
+		CHECK(v2 == v1);
+	}
+}
+
+TEST_CASE("invadd bench", "[scalar_t::uintv_t]")
+{
+	using U = uintv_t<uint64_t, 16>;
+
+	U r; r.Random();
+	U m1; m1.Random();
+
+	auto v1 = r;
+	auto v2 = r;
+
+	{
+		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+		for (size_t i = 0; i < 100; i++)
+			v2 += U(0) - m1;
+
+		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+		std::cout << "Default = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
+	}
+
+	{
+		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+		for (size_t i = 0; i < 100; i++)
+			v1.INVADD(m1);
+
+		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+		std::cout << "FMA = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
+	}
+
+	CHECK(v2 == v1);
+}
+
+TEST_CASE("finite_vector_fuse_multiply3_invadd bench loop", "[scalar_t::uintv_t]")
+{
+	using U = uintv_t<uint64_t, 16>;
+
+	U r; r.Random();
+	U m1; m1.Random();
+	U m2; m2.Random();
+	U m3; m3.Random();
+
+	auto v1 = r;
+	auto v2 = r;
+
+	{
+		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+		for(size_t i = 0; i < 100; i ++)
+			v2 += U(0) - m1 * m2 * m3;
+
+		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+		std::cout << "Default = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
+	}
+
+	{
+		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+		for (size_t i = 0; i < 100; i++)
+			v1.FM3IAD(m1, m2, m3);
+
+		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+		std::cout << "FMA = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
+	}
+
+	CHECK(v2 == v1);
+}
+
+TEST_CASE("rolling over carry order", "[scalar_t::uintv_t]")
+{
+	{
+		using U = uintv_t<uint8_t, 2>;
+
+		uint16_t z1 = 0;
+		U z2;
+
+		z1--;
+		z2 -= {0, 1};
+
+		CHECK((z2 == U(uint8_t(z1 >> 8), uint8_t(z1 & 0xff))));
+	}
+
+	{
+		using U = uintv_t<uint8_t, 2>;
+
+		uint16_t z1 = 0;
+		U z2;
+
+		z1-=2;
+		z2 -= {0, 2};
+
+		CHECK((z2 == U(uint8_t(z1 >> 8), uint8_t(z1 & 0xff))));
+	}
+
+	{
+		using U = uintv_t<uint8_t, 2>;
+
+		uint16_t z1 = 0;
+		U z2;
+
+		z1 -= 4097;
+		z2 -= {0x10, 0x01};
+
+		CHECK((z2 == U(uint8_t(z1 >> 8), uint8_t(z1 & 0xff))));
+	}
+
+	{
+		using U = uintv_t<uint8_t, 2>;
+
+		uint16_t z1 = 0;
+		U z2;
+
+		z1 -= 4096;
+		z2 -= {0x10, 0x00};
+
+		CHECK((z2 == U(uint8_t(z1 >> 8), uint8_t(z1 & 0xff))));
+	}
+
+	{
+		using U = uintv_t<uint8_t, 2>;
+
+		uint16_t z1 = 0;
+		U z2;
+
+		z1 -= 61680;
+		z2 -= {0xf0, 0xf0};
+
+		CHECK((z2 == U(uint8_t(z1 >> 8), uint8_t(z1 & 0xff))));
+	}
+
+	{
+		using U = uintv_t<uint8_t, 4>;
+
+		uint32_t z1 = 0;
+		U z2;
+
+		z1 -= 65281;
+		z2 -= {0,0,0xff, 0x01};
+
+		CHECK(true);
+	}
+
+	{
+		using U = uintv_t<uint8_t, 4>;
+
+		uint32_t z1 = 0;
+		U z2;
+
+		z1 -= 0xffff;
+		z2 -= {0, 0, 0xff, 0xff};
+
+		CHECK(true);
+	}
+}
+
 TEST_CASE("finite_vector_fuse_multiply_add", "[scalar_t::uintv_t]")
 {
 	using U = uintv_t<uint64_t, 32>; //1024bit

@@ -272,5 +272,15 @@ namespace scalar_t
 		{
 			finite_vector_fuse_multiply_add(t1, t2, *this);
 		}
+
+		void FM3IAD(const U& t1, const U& t2, const U& t3)
+		{
+			finite_vector_fuse_multiply_invadd<T>(t1, t2,t3, *this);
+		}
+
+		void INVADD(const U& t1)
+		{
+			finite_vector_inverse_add<T>(*this, t1);
+		}
 	};
 }

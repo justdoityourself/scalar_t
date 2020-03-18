@@ -2,8 +2,6 @@
 
 #include <tuple>
 
-#include "d8u/vector.hpp"
-
 namespace scalar_t
 {
 	namespace helper
@@ -197,6 +195,87 @@ namespace scalar_t
 			}
 		}
 
+		template <typename T, typename C1, typename C2> void finite_vector_inverse_add(C1& v1, const C2& v2)
+		{
+			size_t i = v1.size() - 1;
+
+			T inv = T(0) - v2[i];
+			v1[i] += inv;
+
+			bool take = v2[i] != 0;
+			bool carry = inv > v1[i--];
+
+			for (; i != -1; i--)
+			{			
+				for (size_t j = i; carry && j != -1; j--)
+				{
+					v1[j]++;
+					carry = !v1[j];
+				}
+
+				inv = T(0) - v2[i] - ((take) ? 1 : 0);
+
+				if (v2[i])
+					take = true;
+
+				v1[i] += inv;
+
+				carry = inv > v1[i];
+			}
+		}
+
+		template <typename T, typename C1, typename C2, typename C3, typename A> void finite_vector_fuse_multiply_invadd(const C1& v1, const C2& _v2, const C3& v3, A& accumulate)
+		{
+			auto v2 = _v2 * v3;
+			v2 *= v1;
+
+			finite_vector_inverse_add<T>(accumulate, v2);
+		}
+
+		template <typename T, typename C1, typename C2, typename C3, typename A> void finite_vector_fuse_multiply_invadd_experimental(const C1& v1, const C2& _v2, const C3& v3, A& accumulate)
+		{
+			//blend multiply inverse add?
+			/*
+					template < typename C, typename T > bool via(C& c, size_t i, const T& v)
+		{
+			bool carry = iad(c[i], v);
+
+			while (carry && --i != -1)
+				carry = add(c[i], T(1));
+
+			return carry;
+		}
+
+			for (size_t j = 0, k = v1.size() - 1; j < v1.size(); j++, k--)
+				c += v1[j] * v2[k];
+
+			T c = 0, n = 0;
+
+			for (size_t i = 1; i < v1.size(); i++)
+			{
+				for (size_t j = i, k = v1.size() - 1; j < v1.size(); j++, k--)
+				{
+					auto [h, l] = mul(v1[j], v2[k]);
+
+					c += h, n += l;
+				}
+
+				if (l)
+				{
+					via(accumulate, i, l);
+					accumulate[i - 1]--;
+				}
+
+				if (h)
+				{
+					via(accumulate, i - 1, h);
+
+					if (i >= 2)
+						accumulate[i - 2]--;
+				}
+			}*/
+		}
+
 		template <typename C1, typename C2, typename R> void finite_vector_multiply(const C1& v1, const C2& v2, R& result)
 		{
 			for (size_t j = 0, k = v1.size() - 1; j < v1.size(); j++, k--)
@@ -361,55 +440,6 @@ namespace scalar_t
 			return std::make_tuple(gcd, (y - q * x), x);
 		}
 
-		//The smaller stack helps but still is not a good choice when dealing with larger scalars.
-		//
-
-		template<typename T> std::pair<T, T> & _e_gcd_heap(const T& a, const T& b, d8u::util::BlockVector < 64, std::pair<T, T> > & v)
-		{
-			if (a == 0)
-			{
-				auto& r = v.Allocate();
-				r = std::make_pair(T(0), T(1));
-				return r;
-			}	
-
-			auto& i = v.Allocate();
-			i = b.Divide(a);
-
-			auto & j = _e_gcd_heap<T>(i.second, a,v);
-
-			auto& r = v.Allocate();
-			r = std::make_pair((j.second - i.first * j.first), j.first);
-
-			return r;
-		}
-
-		/*template<typename T> std::pair<T, T> _e_gcd_loop(T a, T b)
-		{
-			if (a == 0)
-				return std::make_pair(T(0), T(1));
-
-			T up(1), vp, uc, vc(1);
-
-			while (a)
-			{
-				auto [q,m] = b.Divide(a);
-
-				b = a;
-				a = m;
-
-				T un = (up - q * uc);
-				T vn = (vp - q * vc);
-
-				up = uc;
-				vp = vc;
-				uc = un;
-				vc = vn;
-			}
-
-			return std::make_pair(up, vp);
-		}*/
-
 		template<typename T> std::pair<T, T> _e_gcd_loop(T a, T b)
 		{
 			T aa[2] = { 1,0 }, bb[2] = { 0,1 },q;
@@ -435,38 +465,5 @@ namespace scalar_t
 			};
 
 		}
-
-
-
-
-
-
-	/*def extended_gcd(a, b) :
-		if a == 0 :
-			return GCD_Result(b, 0, 1)
-
-		unPrev = 1
-		vnPrev = 0
-		unCur = 0
-		vnCur = 1
-
-		while b != 0:
-			bn = a // b
-			newB = a % b
-
-			a = b
-			b = newB
-
-			# Update coefficients
-			unNew = unPrev - bn * unCur
-			vnNew = vnPrev - bn * vnCur
-
-			# Shift coefficients
-			unPrev = unCur
-			vnPrev = vnCur
-			unCur = unNew
-			vnCur = vnNew
-
-			return GCD_Result(a, unPrev, vnPrev)*/
 	}
 }

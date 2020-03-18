@@ -125,7 +125,7 @@ namespace scalar_t
 		{
 			U result;
 
-			finite_vector_multiply(*this, r, result);
+			finite_vector_multiply<T>(*this, r, result);
 
 			return result;
 		}
@@ -153,7 +153,7 @@ namespace scalar_t
 
 		U& operator *= (const U& r)
 		{
-			finite_vector_multiply(*this, r);
+			finite_vector_multiply<T>(*this, r);
 
 			return *this;
 		}
@@ -271,6 +271,11 @@ namespace scalar_t
 		void FMADD(const U& t1, const U& t2)
 		{
 			finite_vector_fuse_multiply_add(t1, t2, *this);
+		}
+
+		void FM3IAD_basic(const U& t1, const U& t2, const U& t3)
+		{
+			finite_vector_fuse_multiply_invadd_basic<T>(t1, t2, t3, *this);
 		}
 
 		void FM3IAD(const U& t1, const U& t2, const U& t3)

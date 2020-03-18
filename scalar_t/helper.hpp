@@ -224,7 +224,7 @@ namespace scalar_t
 			}
 		}
 
-		template <typename T, typename C1, typename C2, typename C3, typename A> void finite_vector_fuse_multiply_invadd(const C1& v1, const C2& _v2, const C3& v3, A& accumulate)
+		template <typename T, typename C1, typename C2, typename C3, typename A> void finite_vector_fuse_multiply_invadd_basic(const C1& v1, const C2& _v2, const C3& v3, A& accumulate)
 		{
 			auto v2 = _v2 * v3;
 			v2 *= v1;
@@ -232,51 +232,73 @@ namespace scalar_t
 			finite_vector_inverse_add<T>(accumulate, v2);
 		}
 
-		template <typename T, typename C1, typename C2, typename C3, typename A> void finite_vector_fuse_multiply_invadd_experimental(const C1& v1, const C2& _v2, const C3& v3, A& accumulate)
+		//_experimental
+		template <typename T, typename C1, typename C2, typename C3, typename A> void finite_vector_fuse_multiply_invadd(const C1& v1, const C2& _v2, const C3& v3, A& accumulate)
 		{
-			//blend multiply inverse add?
-			/*
-					template < typename C, typename T > bool via(C& c, size_t i, const T& v)
-		{
-			bool carry = iad(c[i], v);
+			auto v2 = _v2 * v3;
 
-			while (carry && --i != -1)
-				carry = add(c[i], T(1));
+			size_t i = v1.size() - 1;
+			T c = 0, n = 0, t3 = 0; // Matrix overflow condition possible with very bad configurations. bits<T> FF * FF coverage
 
-			return carry;
-		}
+			std::tie(n, c) = mul(v1[i], v2[i]);
 
-			for (size_t j = 0, k = v1.size() - 1; j < v1.size(); j++, k--)
-				c += v1[j] * v2[k];
+			T inv = T(0) - c;
+			accumulate[i] += inv;
 
-			T c = 0, n = 0;
+			bool take = c != 0;
+			bool carry = inv > accumulate[i--];
 
-			for (size_t i = 1; i < v1.size(); i++)
+			for (; i != 0; i--)
 			{
+				c = n; n = t3; t3 = 0;
+
+				for (size_t j = i; carry && j != -1; j--)
+				{
+					accumulate[j]++;
+					carry = !accumulate[j];
+				}
+
 				for (size_t j = i, k = v1.size() - 1; j < v1.size(); j++, k--)
 				{
 					auto [h, l] = mul(v1[j], v2[k]);
 
-					c += h, n += l;
+					n += h;
+
+					if(h > n) 
+						t3++;
+
+					c += l;
+
+					if (l > c)
+					{
+						n++;
+
+						if (!n) 
+							t3++;
+					}
 				}
 
-				if (l)
-				{
-					via(accumulate, i, l);
-					accumulate[i - 1]--;
-				}
+				inv = T(0) - c - ((take) ? 1 : 0);
 
-				if (h)
-				{
-					via(accumulate, i - 1, h);
+				if (c)
+					take = true;
 
-					if (i >= 2)
-						accumulate[i - 2]--;
-				}
-			}*/
+				accumulate[i] += inv;
+
+				carry = inv > accumulate[i];
+			}
+
+			if (carry) accumulate[0]++;
+
+			for (size_t j = 0, k = v1.size() - 1; j < v1.size(); j++, k--)
+				n += v1[j] * v2[k];
+
+			inv = T(0) - n - ((take) ? 1 : 0);
+
+			accumulate[0] += inv;
 		}
 
-		template <typename C1, typename C2, typename R> void finite_vector_multiply(const C1& v1, const C2& v2, R& result)
+		template <typename T, typename C1, typename C2, typename R> void finite_vector_multiply(const C1& v1, const C2& v2, R& result)
 		{
 			for (size_t j = 0, k = v1.size() - 1; j < v1.size(); j++, k--)
 			{
@@ -296,7 +318,7 @@ namespace scalar_t
 			}
 		}
 
-		template <typename C1, typename C2> void finite_vector_multiply(C1& v1, const C2& v2)
+		template <typename T, typename C1, typename C2> void finite_vector_multiply(C1& v1, const C2& v2)
 		{
 			for (size_t j = 0, k = v1.size() - 1; j < v1.size(); j++, k--)
 			{

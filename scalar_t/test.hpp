@@ -226,12 +226,15 @@ TEST_CASE("finite_vector_fuse_multiply3_invadd", "[scalar_t::uintv_t]")
 
 		auto v1 = r;
 		auto v2 = r;
+		auto v3 = r;
 
 
 		v2 += U(0) - m1 * m2 * m3;
 
 		v1.FM3IAD(m1, m2, m3);
+		v3.FM3IAD_basic(m1, m2, m3);
 
+		CHECK(v3 == v1);
 		CHECK(v2 == v1);
 	}
 
@@ -270,6 +273,28 @@ TEST_CASE("finite_vector_fuse_multiply3_invadd", "[scalar_t::uintv_t]")
 
 		v1.FM3IAD(m1, m2, m3);
 
+		CHECK(v2 == v1);
+	}
+
+	{
+		using U = uintv_t<uint8_t, 4>;
+
+		U r{ 0x31 ,0x74 ,0x3c ,0x31 };
+		U m1{ 0x78 ,0x3c ,0xf5 ,0x0a };
+		U m2{ 0xf3 ,0x19 ,0xff ,0x4f };
+		U m3{ 0xde ,0x66,0xce ,0xb1 };
+
+		auto v1 = r;
+		auto v2 = r;
+		auto v3 = r;
+
+
+		v2 += U(0) - m1 * m2 * m3;
+
+		v1.FM3IAD(m1, m2, m3);
+		v3.FM3IAD_basic(m1, m2, m3);
+
+		CHECK(v3 == v1);
 		CHECK(v2 == v1);
 	}
 
@@ -325,7 +350,7 @@ TEST_CASE("invadd bench", "[scalar_t::uintv_t]")
 
 		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-		std::cout << "FMA = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
+		std::cout << "INVADD = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
 	}
 
 	CHECK(v2 == v1);
@@ -342,6 +367,7 @@ TEST_CASE("finite_vector_fuse_multiply3_invadd bench loop", "[scalar_t::uintv_t]
 
 	auto v1 = r;
 	auto v2 = r;
+	auto v3 = r;
 
 	{
 		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
@@ -352,6 +378,17 @@ TEST_CASE("finite_vector_fuse_multiply3_invadd bench loop", "[scalar_t::uintv_t]
 		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
 		std::cout << "Default = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
+	}
+
+	{
+		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+		for (size_t i = 0; i < 100; i++)
+			v3.FM3IAD_basic(m1, m2, m3);
+
+		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+		std::cout << "FMA_basic = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
 	}
 
 	{
@@ -537,7 +574,7 @@ TEST_CASE("standing in place multiplication", "[scalar_t::helpers]")
 
 		C t1 = { 4,4,4,4 }, t2 = { 1,1,1,1 }, expected = { 16,12,8,4 };
 
-		finite_vector_multiply(t1, t2);
+		finite_vector_multiply<U>(t1, t2);
 
 		CHECK(std::equal(t1.begin(), t1.end(), expected.begin()));
 	}
@@ -547,7 +584,7 @@ TEST_CASE("standing in place multiplication", "[scalar_t::helpers]")
 
 		C t1 = { 4,4,4,4 }, t2 = { 1,2,3,4 }, expected = { 40,36,28,16 };
 
-		finite_vector_multiply(t1, t2);
+		finite_vector_multiply<U>(t1, t2);
 
 		CHECK(std::equal(t1.begin(), t1.end(), expected.begin()));
 	}
@@ -557,7 +594,7 @@ TEST_CASE("standing in place multiplication", "[scalar_t::helpers]")
 
 		C t1 = { 4,3,2,1 }, t2 = { 1,2,3,4 }, expected = { 30,20,11,4 };
 
-		finite_vector_multiply(t1, t2);
+		finite_vector_multiply<U>(t1, t2);
 
 		CHECK(std::equal(t1.begin(), t1.end(), expected.begin()));
 	}
@@ -567,7 +604,7 @@ TEST_CASE("standing in place multiplication", "[scalar_t::helpers]")
 
 		C t1 = { 40,30,20,10 }, t2 = { 1,2,3,4 }, expected = { 44,200,110,40 };
 
-		finite_vector_multiply(t1, t2);
+		finite_vector_multiply<U>(t1, t2);
 
 		CHECK(std::equal(t1.begin(), t1.end(), expected.begin()));
 	}
@@ -577,7 +614,7 @@ TEST_CASE("standing in place multiplication", "[scalar_t::helpers]")
 
 		C t1 = { 40,30,20,10 }, t2 = { 10,20,30,40 }, expected = { 191,212,77,144 };
 
-		finite_vector_multiply(t1, t2);
+		finite_vector_multiply<U>(t1, t2);
 
 		CHECK(std::equal(t1.begin(), t1.end(), expected.begin()));
 	}
@@ -594,7 +631,7 @@ TEST_CASE("basic multiplication", "[scalar_t::helpers]")
 
 		C t1 = { 4,4,4,4 }, t2 = { 1,1,1,1 }, expected = { 16,12,8,4 }, result;
 
-		finite_vector_multiply(t1, t2, result);
+		finite_vector_multiply<U>(t1, t2, result);
 
 		CHECK(std::equal(result.begin(), result.end(), expected.begin()));
 	}
@@ -604,7 +641,7 @@ TEST_CASE("basic multiplication", "[scalar_t::helpers]")
 
 		C t1 = { 4,4,4,4 }, t2 = { 1,2,3,4 }, expected = { 40,36,28,16 }, result;
 
-		finite_vector_multiply(t1, t2, result);
+		finite_vector_multiply<U>(t1, t2, result);
 
 		CHECK(std::equal(result.begin(), result.end(), expected.begin()));
 	}
@@ -614,7 +651,7 @@ TEST_CASE("basic multiplication", "[scalar_t::helpers]")
 
 		C t1 = { 4,3,2,1 }, t2 = { 1,2,3,4 }, expected = { 30,20,11,4 }, result;
 
-		finite_vector_multiply(t1, t2, result);
+		finite_vector_multiply<U>(t1, t2, result);
 
 		CHECK(std::equal(result.begin(), result.end(), expected.begin()));
 	}
@@ -624,7 +661,7 @@ TEST_CASE("basic multiplication", "[scalar_t::helpers]")
 
 		C t1 = { 40,30,20,10 }, t2 = { 1,2,3,4 }, expected = { 44,200,110,40 }, result;
 
-		finite_vector_multiply(t1, t2, result);
+		finite_vector_multiply<U>(t1, t2, result);
 
 		CHECK(std::equal(result.begin(), result.end(), expected.begin()));
 	}
@@ -634,7 +671,7 @@ TEST_CASE("basic multiplication", "[scalar_t::helpers]")
 
 		C t1 = { 40,30,20,10 }, t2 = { 10,20,30,40 }, expected = { 191,212,77,144 }, result;
 
-		finite_vector_multiply(t1, t2, result);
+		finite_vector_multiply<U>(t1, t2, result);
 
 		CHECK(std::equal(result.begin(), result.end(), expected.begin()));
 	}

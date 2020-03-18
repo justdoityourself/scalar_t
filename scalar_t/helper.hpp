@@ -232,11 +232,17 @@ namespace scalar_t
 			finite_vector_inverse_add<T>(accumulate, v2);
 		}
 
-		//_experimental
-		template <typename T, typename C1, typename C2, typename C3, typename A> void finite_vector_fuse_multiply_invadd(const C1& v1, const C2& _v2, const C3& v3, A& accumulate)
+		template <typename T, typename C1, typename C2, typename C3, typename A> void finite_vector_fuse_multiply3_invadd(const C1& v1, const C2& _v2, const C3& v3, A& accumulate)
 		{
 			auto v2 = _v2 * v3;
 
+			finite_vector_fuse_multiply2_invadd<T>(v1, v2, accumulate);
+		}
+
+		
+
+		template <typename T, typename C1, typename C2, typename A> void finite_vector_fuse_multiply2_invadd(const C1& v1, const C2& v2, A& accumulate)
+		{
 			size_t i = v1.size() - 1;
 			T c = 0, n = 0, t3 = 0; // Matrix overflow condition possible with very bad configurations. bits<T> FF * FF coverage
 

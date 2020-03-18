@@ -280,7 +280,12 @@ namespace scalar_t
 
 		void FM3IAD(const U& t1, const U& t2, const U& t3)
 		{
-			finite_vector_fuse_multiply_invadd<T>(t1, t2,t3, *this);
+			finite_vector_fuse_multiply3_invadd<T>(t1, t2,t3, *this);
+		}
+
+		void FM2IAD(const U& t1, const U& t2)
+		{
+			finite_vector_fuse_multiply2_invadd<T>(t1, t2, *this);
 		}
 
 		void INVADD(const U& t1)

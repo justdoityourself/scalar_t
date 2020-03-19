@@ -1,6 +1,10 @@
 # scalar_t
 Template Scalar Integer Library
 
+## Implemented For
+
+https://github.com/justdoityourself/d88
+
 ## Not a Big Integer Library
 
 scalar_t is is a template library that allows you to define and construct integers of a custom yet fixed sized based on the native types avalable to your target architecture. 

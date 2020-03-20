@@ -1,6 +1,10 @@
 # scalar_t
 Template Scalar Integer Library
 
+## Introduction
+
+[![scalar_t](http://img.youtube.com/vi/NP1FFL8TeUA/0.jpg)](https://www.youtube.com/watch?v=NP1FFL8TeUA "scalar_t")
+
 ## Implemented For
 
 https://github.com/justdoityourself/d88

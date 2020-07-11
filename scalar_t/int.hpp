@@ -112,6 +112,16 @@ namespace scalar_t
 			return result;
 		}
 
+		U operator ^ (const U& r) const
+		{
+			U result;
+
+			for (size_t i = 0; i < U::size(); i++)
+				result[i] = (*this)[i] ^ r[i];
+
+			return result;
+		}
+
 		U operator - (const U& r) const
 		{
 			U result;
@@ -154,6 +164,14 @@ namespace scalar_t
 		U& operator *= (const U& r)
 		{
 			finite_vector_multiply<T>(*this, r);
+
+			return *this;
+		}
+
+		U& operator ^= (const U& r) const
+		{
+			for (size_t i = 0; i < U::size(); i++)
+				(*this)[i] ^= r[i];
 
 			return *this;
 		}

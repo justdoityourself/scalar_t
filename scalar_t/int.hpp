@@ -10,10 +10,6 @@
 #include <cstdint>
 #include <type_traits>
 
-#include <intrin.h>
-#pragma intrinsic(_umul128)
-
-
 #include "d8u/random.hpp"
 #include "d8u/string.hpp"
 

@@ -1,5 +1,9 @@
 #pragma once
 
+#include <intrin.h>
+#pragma intrinsic(_umul128)
+#pragma intrinsic(_addcarryx_u64)
+
 #include <tuple>
 
 namespace scalar_t
@@ -58,6 +62,7 @@ namespace scalar_t
 			return t2 > t1;
 		}
 
+		//TODO intrinsic https://stackoverflow.com/questions/29229371/addcarry-u64-and-addcarryx-u64-with-msvc-and-icc#:~:text=The%20documentation%20for%20MSVC%20lists,_addcarry_u64%20has%20no%20listed%20technology.&text=The%20_addcarry_u64%20intrinsic%20documentation%20says,produce%20either%20adcx%20or%20adox%20.
 		template < typename C, typename T > bool vad(C& c, size_t i, const T& v)
 		{
 			bool carry = add(c[i], v);

@@ -143,6 +143,13 @@ namespace scalar_t
 			return *this;
 		}
 
+		U& operator++(int)
+		{
+			vad(*this, B::size() - 1, 1);
+
+			return *this;
+		}
+
 		U& operator += (const U& r)
 		{
 			finite_vector_add(*this, r);
